@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LM Monthly Planner</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f0f2f5;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            background-repeat: no-repeat;
+            background-size: 100% 400px;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+        }
+        
+        .glass-card-dark {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+        
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <nav class="px-6 py-4 shrink-0 z-20 text-white">
+        <div class="max-w-7xl mx-auto flex justify-between items-center glass-card-dark rounded-2xl px-6 py-3 shadow-lg">
+            <div class="flex items-center gap-4">
+                <div class="h-10 px-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center shadow-lg border border-white/20 text-sm whitespace-nowrap">
+                    Likhi & Mohi
+                </div>
+                <div>
+                    <h1 id="user-greeting" class="text-lg md:text-xl font-bold tracking-tight leading-none">Likhith & Mohith</h1>
+                    <span class="text-xs font-medium text-indigo-200 opacity-80">MONTHLY BUGET PLANNER</span>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="location.reload()" class="text-xs bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg transition border border-white/10 backdrop-blur-sm">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex-1 overflow-hidden relative">
+        <div class="h-full overflow-y-auto p-4 md:p-6 pb-20">
+            <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <div class="lg:col-span-4 space-y-6 animate-fade-in">
+                    
+                    <div class="relative overflow-hidden rounded-3xl p-8 shadow-xl text-white transform hover:scale-[1.02] transition duration-300 group">
+                        <div class="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600"></div>
+                        <div class="absolute top-0 right-0 -mr-8 -mt-8 w-40 h-40 rounded-full bg-white opacity-10 blur-2xl group-hover:opacity-20 transition"></div>
+                        
+                        <div class="relative z-10">
+                            <h2 class="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-2">Total Balance</h2>
+                            <div id="total-balance" class="text-5xl font-bold tracking-tight mb-8">₹0.00</div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-white/10 rounded-xl p-3 backdrop-blur-sm border border-white/10">
+                                    <div class="flex items-center gap-2 mb-1 text-emerald-200 text-xs font-semibold uppercase">
+                                        <div class="w-2 h-2 rounded-full bg-emerald-400"></div> Initial
+                                    </div>
+                                    <div id="total-income" class="text-lg font-bold">₹0.00</div>
+                                </div>
+                                <div class="bg-white/10 rounded-xl p-3 backdrop-blur-sm border border-white/10">
+                                    <div class="flex items-center gap-2 mb-1 text-rose-200 text-xs font-semibold uppercase">
+                                        <div class="w-2 h-2 rounded-full bg-rose-400"></div> Expenses
+                                    </div>
+                                    <div id="total-expenses" class="text-lg font-bold">₹0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 shadow-lg animate-fade-in delay-100">
+                        <h3 class="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2">
+                            <span class="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg"><i class="fa-solid fa-minus text-sm"></i></span> 
+                            New Expense
+                        </h3>
+                        
+                        <form id="transaction-form" class="space-y-5">
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs font-semibold text-slate-500 ml-1 mb-1 block">Amount</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-slate-400 font-bold">₹</span>
+                                            </div>
+                                            <input type="number" id="amount" placeholder="0" min="1" required
+                                                class="w-full pl-8 pr-4 py-3 bg-slate-50 border-0 ring-1 ring-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition text-sm font-medium text-slate-700">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold text-slate-500 ml-1 mb-1 block">Category</label>
+                                        <select id="category" class="w-full px-3 py-3 bg-slate-50 border-0 ring-1 ring-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition text-sm font-medium text-slate-700 appearance-none cursor-pointer">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-500 ml-1 mb-1 block">Date</label>
+                                    <input type="date" id="date" required
+                                        class="w-full px-4 py-3 bg-slate-50 border-0 ring-1 ring-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition text-sm font-medium text-slate-700">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all transform active:scale-[0.98]">
+                                Add Expense
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="text-center">
+                         <button onclick="clearUserData()" class="text-xs text-rose-500 hover:text-rose-700 hover:underline transition">
+                            Reset My Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-8 flex flex-col gap-6">
+                    <div class="glass-panel rounded-3xl p-6 shadow-lg animate-fade-in delay-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-slate-800">Spending Breakdown</h3>
+                            <span class="text-xs font-medium px-2 py-1 bg-slate-100 rounded text-slate-500">Analytics</span>
+                        </div>
+                        <div class="h-56 w-full flex justify-center relative">
+                             <canvas id="expenseChart"></canvas>
+                             <div id="no-data-chart" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 hidden">
+                                <i class="fa-solid fa-chart-pie text-4xl mb-2 opacity-20"></i>
+                                <span class="text-sm font-medium">No expenses to analyze</span>
+                             </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl shadow-lg flex flex-col flex-1 min-h-[400px] overflow-hidden animate-fade-in delay-200">
+                        <div class="p-6 border-b border-slate-100/50 flex justify-between items-end bg-white/30 backdrop-blur-sm">
+                            <h3 class="text-xl font-bold text-slate-800">History</h3>
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-4 space-y-3" id="transaction-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let currentUser = "likhi_mohi"; // Single static user
+        let transactions = [];
+        let chartInstance = null;
+        const expenseCategories = ['Food', 'Rent', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Shopping', 'Education', 'Other'];
+
+        const form = document.getElementById('transaction-form');
+        const amountEl = document.getElementById('amount');
+        const categoryEl = document.getElementById('category');
+        const dateEl = document.getElementById('date');
+        const listEl = document.getElementById('transaction-list');
+        const balanceEl = document.getElementById('total-balance');
+        const incomeEl = document.getElementById('total-income');
+        const expenseEl = document.getElementById('total-expenses');
+
+        // --- Initialization ---
+        window.onload = () => {
+            const today = new Date().toISOString().split('T')[0];
+            dateEl.value = today;
+            updateCategoryOptions();
+            loadUserData();
+        };
+
+        function loadUserData() {
+            const key = `lm_budget_planner_v2`;
+            const storedData = localStorage.getItem(key);
+            if (storedData) {
+                transactions = JSON.parse(storedData);
+            } else {
+                // Initial balance of 50,000
+                transactions = [{
+                    id: Date.now(),
+                    type: 'income',
+                    description: 'Initial Balance',
+                    amount: 50000,
+                    category: 'Initial',
+                    date: new Date().toISOString().split('T')[0]
+                }];
+                saveData();
+            }
+            updateUI();
+        }
+
+        function saveData() {
+            localStorage.setItem(`lm_budget_planner_v2`, JSON.stringify(transactions));
+        }
+
+        function clearUserData() {
+            if(confirm('Reset all data? (Restores balance to 50,000)')) {
+                localStorage.removeItem(`lm_budget_planner_v2`);
+                loadUserData();
+            }
+        }
+
+        function updateCategoryOptions() {
+            categoryEl.innerHTML = expenseCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const transaction = {
+                id: Date.now(),
+                type: 'expense',
+                description: categoryEl.value, 
+                amount: +amountEl.value,
+                category: categoryEl.value,
+                date: dateEl.value
+            };
+            transactions.push(transaction);
+            saveData();
+            updateUI();
+            form.reset();
+            dateEl.value = new Date().toISOString().split('T')[0];
+        });
+
+        function deleteTransaction(id) {
+            if(confirm('Delete this record?')) {
+                transactions = transactions.filter(t => t.id !== id);
+                saveData();
+                updateUI();
+            }
+        }
+
+        function formatINR(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency', currency: 'INR', maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function updateUI() {
+            const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+            const expense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+            const total = income - expense;
+
+            balanceEl.innerText = formatINR(total);
+            incomeEl.innerText = formatINR(income);
+            expenseEl.innerText = formatINR(expense);
+            
+            renderList();
+            renderChart();
+        }
+
+        function renderList() {
+            listEl.innerHTML = '';
+            const expenseTransactions = transactions.filter(t => t.type === 'expense');
+            if (expenseTransactions.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm font-medium">No expenses yet.</div>`;
+                return;
+            }
+            expenseTransactions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach((t, index) => {
+                const item = document.createElement('div');
+                item.className = `group bg-white p-4 rounded-2xl mb-3 flex justify-between items-center shadow-sm border border-slate-100 hover:shadow-md transition-all animate-fade-in`;
+                item.style.animationDelay = `${index * 50}ms`;
+                item.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="h-12 w-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                            <i class="fa-solid fa-bag-shopping"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-700 text-sm">${t.category}</h4>
+                            <div class="text-xs text-slate-400">${t.date}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-5">
+                        <span class="font-bold text-rose-600">-${formatINR(t.amount)}</span>
+                        <button onclick="deleteTransaction(${t.id})" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>`;
+                listEl.appendChild(item);
+            });
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            const noDataEl = document.getElementById('no-data-chart');
+            const expenseTransactions = transactions.filter(t => t.type === 'expense');
+            
+            if (expenseTransactions.length === 0) {
+                if (chartInstance) chartInstance.destroy();
+                noDataEl.classList.remove('hidden');
+                return;
+            } 
+            noDataEl.classList.add('hidden');
+
+            const categoryTotals = {};
+            expenseTransactions.forEach(t => categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount);
+
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryTotals),
+                    datasets: [{
+                        data: Object.values(categoryTotals),
+                        backgroundColor: ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#3b82f6'],
+                        borderWidth: 2, borderColor: '#ffffff'
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, cutout: '70%',
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 12, usePointStyle: true, font: { size: 11 } } } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
